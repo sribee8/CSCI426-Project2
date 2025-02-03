@@ -1,60 +1,91 @@
 using UnityEngine;
-
 public class Player : MonoBehaviour
 {
     private Rigidbody2D rb;
-    public GameObject Alien1;
-    public GameObject Alien2;
+    private SpriteRenderer spriteRenderer;
+
+    [Header("Alien Prefab")]
+    public GameObject Alien;
+
+    [Header("Player Sprites")]
+    [SerializeField] private Sprite aliveSprite;
+    [SerializeField] private Sprite deadSprite;
+
+    [Header("Spawn Settings")]
+    [SerializeField] private float baseInterval = 3f;
+    [SerializeField] private float minimumInterval = 0.5f;
+    [SerializeField] private float intervalDecreaseRate = 0.1f;
+
     private float t;
-    private float tt;
-    public float interval = 3f;
-    
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private float currentInterval;
+    private bool isDead = false;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
         t = 0f;
+        currentInterval = baseInterval;
+
+        if (spriteRenderer != null && aliveSprite != null)
+        {
+            spriteRenderer.sprite = aliveSprite;
+        }
     }
 
-    // Update is called once per frame
     void Update()
     {
+        if (isDead || GameManager.Instance.isGameOver) return;
+
         t += Time.deltaTime;
+        currentInterval = Mathf.Max(currentInterval - (Time.deltaTime * intervalDecreaseRate), minimumInterval);
         if (Input.GetKeyDown("space"))
         {
             rb.gravityScale *= -1;
+            transform.Rotate(0, 0, 180);
         }
-        //spawning the aliens after a certain interval
-        while (t >= interval)
+        if (t >= currentInterval)
         {
             SpawnAlien();
-            t -= interval;
-            interval -= 0.5f;
+            t = 0f;
         }
     }
 
     void SpawnAlien()
     {
-        int val = Random.Range(0, 2);
-        if (val == 0)
-        {
-            Instantiate(Alien1, new Vector3(13.4f, 2.7f, 0), Quaternion.identity);
-        }
-        else
-        {
-            {
-                Instantiate(Alien2, new Vector3(13.4f, -2.8f, 0), Quaternion.identity);
-            }
-        }
+        float randomY = Random.Range(-3.5f, 3.5f);
+        Vector3 spawnPosition = new Vector3(13.4f, randomY, 0);
+        Instantiate(Alien, spawnPosition, Quaternion.identity);
     }
 
     void OnCollisionEnter2D(Collision2D col)
     {
-        if (col.gameObject.tag == "Alien")
+        if (!isDead && col.gameObject.CompareTag("Alien"))
         {
-            transform.position = new Vector3(0, -2.9f, 0);
-            GameManager.Instance.speed = 3f;
-            GameManager.Instance.totalTime = 0f;
+            isDead = true;
+
+            if (spriteRenderer != null && deadSprite != null)
+            {
+                spriteRenderer.sprite = deadSprite;
+            }
+
+            GameManager.Instance.GameOver();
         }
+    }
+
+    public void ResetForNewGame()
+    {
+        isDead = false;
+        transform.position = new Vector3(-6.16f, -2.9f, 0);
+        transform.rotation = Quaternion.identity;
+
+        if (spriteRenderer != null && aliveSprite != null)
+        {
+            spriteRenderer.sprite = aliveSprite;
+        }
+
+        t = 0f;
+        currentInterval = baseInterval;
+        rb.gravityScale = Mathf.Abs(rb.gravityScale);
     }
 }

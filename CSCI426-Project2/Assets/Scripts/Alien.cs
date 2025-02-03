@@ -13,7 +13,7 @@ public class Alien : MonoBehaviour
         transform.position += new Vector3(-GameManager.Instance.speed, 0, 0) * Time.deltaTime;
         if (transform.position.x < -15f)
         {
-            Destroy(this);
+            Destroy(gameObject);
         }
     }
 }

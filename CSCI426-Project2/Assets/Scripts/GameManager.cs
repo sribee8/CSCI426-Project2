@@ -7,7 +7,11 @@ public class GameManager : MonoBehaviour
     public float speed = 3f;
     public float totalTime = 0f;
     public TextMeshProUGUI totalTimeText;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    public TextMeshProUGUI gameOverText;
+    public GameObject redOverlay;
+
+    public bool isGameOver = false;
+
     private void Awake()
     {
         Instance = this;
@@ -15,14 +19,70 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        
+        if (gameOverText != null) gameOverText.gameObject.SetActive(false);
+        if (redOverlay != null) redOverlay.SetActive(false);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        speed += Time.deltaTime;
-        totalTime += Time.deltaTime;
-        totalTimeText.text = "Time: " + totalTime.ToString("F2");
+        if (!isGameOver)
+        {
+            speed += Time.deltaTime;
+            totalTime += Time.deltaTime;
+            totalTimeText.text = "Time: " + totalTime.ToString("F2");
+        }
+        else
+        {
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                RestartGame();
+            }
+        }
+    }
+
+    public void GameOver()
+    {
+        isGameOver = true;
+
+        // Hide time text
+        if (totalTimeText != null)
+        {
+            totalTimeText.gameObject.SetActive(false);
+        }
+
+        if (gameOverText != null)
+        {
+            gameOverText.gameObject.SetActive(true);
+            gameOverText.text = "GAME OVER\nSurvival Time: " + totalTime.ToString("F2") + "\nPress R to Restart";
+        }
+
+        if (redOverlay != null)
+        {
+            redOverlay.SetActive(true);
+        }
+    }
+
+    public void RestartGame()
+    {
+        isGameOver = false;
+        speed = 3f;
+        totalTime = 0f;
+
+        // Show time text again
+        if (totalTimeText != null) totalTimeText.gameObject.SetActive(true);
+        if (gameOverText != null) gameOverText.gameObject.SetActive(false);
+        if (redOverlay != null) redOverlay.SetActive(false);
+
+        GameObject[] aliens = GameObject.FindGameObjectsWithTag("Alien");
+        foreach (GameObject alien in aliens)
+        {
+            Destroy(alien);
+        }
+
+        Player player = FindObjectOfType<Player>();
+        if (player != null)
+        {
+            player.ResetForNewGame();
+        }
     }
 }
