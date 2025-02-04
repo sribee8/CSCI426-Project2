@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 public class Player : MonoBehaviour
 {
     private Rigidbody2D rb;
@@ -20,12 +21,18 @@ public class Player : MonoBehaviour
     private float currentInterval;
     private bool isDead = false;
 
+    private Vector3 originalScale;
+    public AudioSource eating;
+    public AudioSource blip;
+    public GameObject AlienEating;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         t = 0f;
         currentInterval = baseInterval;
+        originalScale = transform.localScale;
 
         if (spriteRenderer != null && aliveSprite != null)
         {
@@ -43,6 +50,7 @@ public class Player : MonoBehaviour
         {
             rb.gravityScale *= -1;
             transform.Rotate(0, 0, 180);
+            blip.Play();
         }
         if (t >= currentInterval)
         {
@@ -68,7 +76,15 @@ public class Player : MonoBehaviour
             {
                 spriteRenderer.sprite = deadSprite;
             }
-
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            if (rb.gravityScale < 0)
+            {
+                rb.gravityScale *= -1;
+            }
+            StartCoroutine(Shrink());
+            Instantiate(AlienEating, transform.position, Quaternion.identity);
+            eating.Play();
             GameManager.Instance.GameOver();
         }
     }
@@ -78,6 +94,7 @@ public class Player : MonoBehaviour
         isDead = false;
         transform.position = new Vector3(-6.16f, -2.9f, 0);
         transform.rotation = Quaternion.identity;
+        transform.localScale = originalScale;
 
         if (spriteRenderer != null && aliveSprite != null)
         {
@@ -87,5 +104,17 @@ public class Player : MonoBehaviour
         t = 0f;
         currentInterval = baseInterval;
         rb.gravityScale = Mathf.Abs(rb.gravityScale);
+    }
+
+    private IEnumerator Shrink()
+    {
+        float timer = 0f;
+        while (timer < 2f)
+        {
+            timer += Time.deltaTime;
+            float scale = Mathf.Lerp(1f, 0f, timer / 2);
+            transform.localScale = originalScale * scale;
+            yield return null;
+        }
     }
 }
