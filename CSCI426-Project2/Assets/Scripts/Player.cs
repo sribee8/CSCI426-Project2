@@ -91,6 +91,7 @@ public class Player : MonoBehaviour
 
     public void ResetForNewGame()
     {
+        StopAllCoroutines();
         isDead = false;
         transform.position = new Vector3(-6.16f, -2.9f, 0);
         transform.rotation = Quaternion.identity;
@@ -108,6 +109,7 @@ public class Player : MonoBehaviour
 
     private IEnumerator Shrink()
     {
+
         float timer = 0f;
         while (timer < 2f)
         {
